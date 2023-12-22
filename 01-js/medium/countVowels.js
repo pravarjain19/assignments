@@ -6,7 +6,17 @@
 */
 
 function countVowels(str) {
-    // Your code here
-}
+    
+  let  arr  =[ 'a' , 'e' , 'i' , 'o' , 'u' , 'A' , 'E' , 'I' , 'O' , 'U' ]
+let res = 0;
+    for(let char of str){
+        if(arr.includes(char)){
+          res++; 
+        }
+    }
 
+    return res;
+}
+let a =countVowels("Hello, world!")
+console.log(a);
 module.exports = countVowels;
