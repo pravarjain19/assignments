@@ -41,9 +41,131 @@
  */
   const express = require('express');
   const bodyParser = require('body-parser');
-  
+  const  z =  require('zod');
+  const fs = require("fs")
   const app = express();
   
   app.use(bodyParser.json());
+
+  // zod to check the req middleware
+  function checktheReq(req , res , next){
+    let schema  =   z.object({
+        title : z.string(),
+        completed : z.boolean(),
+        description: z.string()
+
+      })
+     
+     let iscorrect  = 
+     schema.safeParse(req.body);
+
+      if(!iscorrect.success){
+        res.status(404).json(iscorrect)
+        return
+      }
+      next()
+  }
   
+  // get all todos 
+  app.get("/todos" , (req ,  res) =>{
+
+      res.status(200).json(JSON.parse(getAllData()))
+  })  
+
+  // post todos 
+  app.post("/todos"   , checktheReq ,  (req , res)=>{
+
+
+     let id  = Math.random().toString(16).slice(2);
+    let body = req.body;
+    body = {...body , id:id}
+   let todos =JSON.parse(getAllData());
+    
+   let tilte =  todos.filter((e)=>e.title === body.title)
+  
+   if(tilte.length>0){
+      res.json({
+        msg:"Already added , add new one with differnet tilte"
+      })
+      return
+   }
+   
+    todos.push(body)
+    
+
+    fs.writeFileSync('./todos.json' , JSON.stringify(todos))
+    res.json(body)
+  })
+
+  // get todo by id
+  app.get("/todo" , (req , res)=>{
+
+  let schema = z.string();
+  let id =    req.query.id; 
+  
+  let allTodos = JSON.parse(getAllData());
+ let todo =  allTodos.filter((todo)=>todo.id==id)
+  
+  if(todo.length>0){
+      res.json(todo[0])
+  }else{
+    res.status(404).json({msg : "No todo found "+id})
+  }
+  
+  } )
+
+
+  app.delete("/todo" ,(req , res)=>{
+        let id = req.query.id
+
+     let alltodos =    JSON.parse(getAllData());
+    
+     let data = -1
+    for (let index = 0; index < alltodos.length; index++) {
+      const element = alltodos[index];
+      if(element.id == id){
+        
+        data = index;
+        break;
+      }
+      
+    }
+    console.log(data);
+      if(data>-1){
+          alltodos.splice(data , 1);
+        
+         fs.writeFileSync('./todos.json' , JSON.stringify(alltodos))
+         res.status(200).json({msg:"Todo removed successfully"})
+      }
+      else{
+        res.status(404).json({msg:"No todo find " + id})
+
+      }
+  })
+
+
+  function getAllData(){
+    let data = 
+    fs.readFileSync('./todos.json' , 'utf-8' , (err, data)=>{
+          if(err){
+            throw new Error("Some went wrong")
+            
+          }
+          
+          return data;
+    })
+    return data
+  }
+
+
+
+  app.use((err , req,res , next)=>{
+    console.log(err);
+    res.status(500).json({
+      msg:"Something Up with the server"
+    })
+  })
+  app.listen(3000 , ()=>{
+    console.log("listing to port 3000");
+  })
   module.exports = app;
