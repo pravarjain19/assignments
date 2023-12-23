@@ -14,8 +14,52 @@
  */
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
+const path = require('path'); 
 const app = express();
+
+
+app.use(express.json());
+
+
+
+app.get('/files' , (req , res)=>{
+
+ 
+    fs.readdir(path.join(__dirname  , './files/') , (err , files)=>{
+      if(err){
+        return res.status(404).json({msg:"something worng"})
+      }
+      
+      let ans = {};
+
+     ans.items = [...files];
+      
+
+      return res.status(200).json(ans);
+    })
+  
+ 
+})
+
+
+app.get('/files/:filename' , (req ,res)=>{
+    const readfile = path.join(__dirname ,  './files/' , req.params.filename)
+
+    fs.readFile(readfile , 'utf-8' , (err , data)=>{
+          if(err){
+            return res.status(404).send("file not found")
+          }
+
+          return res.send(data);
+    })
+
+})
+
+
+app.listen(3000, ()=>{
+  console.log("Listing to port 3000");
+})
+
 
 
 module.exports = app;
